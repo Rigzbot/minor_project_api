@@ -1,0 +1,7 @@
+annoy==1.17.3
+deepface==0.0.79
+fastapi==0.103.1
+numpy==1.24.3
+opencv_python==4.8.0.76
+pydantic==2.3.0
+tqdm==4.66.1
