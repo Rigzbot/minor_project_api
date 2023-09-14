@@ -1,17 +1,16 @@
 from fastapi import FastAPI, HTTPException
-from main import YOLOv8_face
-import numpy as np
+from app.yolov8 import YOLOv8_face
 import cv2
-from eval_spotify_annoy import get_face_enrollement_number
+from app.eval_spotify_annoy import get_face_enrollement_number
 import shutil
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse
 
 # config
-yolo_model_path = "weights/yolov8n-face.onnx"
+yolo_model_path = "app/weights/yolov8n-face.onnx"
 conf_threshold = 0.45
 nmsthreshold = 0.5
-detected_faces_directory = "unknown_faces"
+detected_faces_directory = "app/unknown_faces"
 
 app = FastAPI()
 
@@ -23,6 +22,7 @@ class ImageData(BaseModel):
 async def get_enrollement_number(data: ImageData):
     try:
         # Read the uploaded image directly with OpenCV
+
         img_path = data.image
         src_img = cv2.imread(img_path)
         # image_data = await image_upload.image.read()

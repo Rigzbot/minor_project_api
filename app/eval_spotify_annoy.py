@@ -5,12 +5,12 @@ import os
 
 
 # Load embeddings file
-with open("spotify_annoy/embeddings.pkl", "rb") as file:
+with open("app/spotify_annoy/embeddings.pkl", "rb") as file:
     representations = pickle.load(file)
 
 embedding_size = 2622
 t = AnnoyIndex(embedding_size, 'euclidean')
-t.load('spotify_annoy/custom_vgg_annoy_model.ann')
+t.load('app/spotify_annoy/custom_vgg_annoy_model.ann')
 
 # Threshold for classifying images as "unknown"
 threshold = 0.40
