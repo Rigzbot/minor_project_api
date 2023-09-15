@@ -1,33 +1,44 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile
 from app.yolov8 import YOLOv8_face
 import cv2
 from app.eval_spotify_annoy import get_face_enrollement_number
 import shutil
-from pydantic import BaseModel
 from fastapi.responses import JSONResponse
+import uuid
+import os
 
 # config
 yolo_model_path = "app/weights/yolov8n-face.onnx"
 conf_threshold = 0.45
 nmsthreshold = 0.5
 detected_faces_directory = "app/unknown_faces"
+IMAGEDIR = "app/fastapi-images/"
 
 app = FastAPI()
 
-class ImageData(BaseModel):
-    image: str
-
-# Create post API endpoint
-@app.post("/get_enrollement_number")
-async def get_enrollement_number(data: ImageData):
+#Upload file to server
+@app.post("/images")
+async def create_upload_file(file: UploadFile = File(...)):
     try:
-        # Read the uploaded image directly with OpenCV
+        file.filename = f"{uuid.uuid4()}.jpg"
+        contents = await file.read()  # <-- Important!
 
-        img_path = data.image
+        os.makedirs(IMAGEDIR, exist_ok=True)
+        with open(f"{IMAGEDIR}{file.filename}", "wb") as f:
+            f.write(contents)
+
+        return JSONResponse(content={"filename": file.filename})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Get list of faces in uploaded image
+@app.get("/images")
+async def get_enrollement_number():
+    try:
+        files = os.listdir(IMAGEDIR)
+        img_path = f"{IMAGEDIR}{files[0]}"
+
         src_img = cv2.imread(img_path)
-        # image_data = await image_upload.image.read()
-        # nparr = np.frombuffer(image_data, np.uint8)
-        # src_img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
         YOLOv8_face.detect_faces(model_path=yolo_model_path, 
                              nmsThreshold=nmsthreshold, 
@@ -39,14 +50,13 @@ async def get_enrollement_number(data: ImageData):
 
         #Delete directory of detected faces
         shutil.rmtree(detected_faces_directory)
+        shutil.rmtree(IMAGEDIR)
 
         return JSONResponse(content={"enrollement_number_list": result})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 # uvicorn model_api:app --reload 
-
-#TODO(Install docker for windows, create docker file, create requirements.txt file, add redundant files in docker_ignore,)
 
 #Can use railways
 
